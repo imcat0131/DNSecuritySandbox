@@ -8,6 +8,8 @@ services:
       - "53:53/tcp"
     networks:
       - dns-network
+    volumes:
+      - dns-logs:/var/log/named
 
   victim-machine:
     build: ./victim-machine
@@ -18,6 +20,8 @@ services:
     build: ./attack-simulation
     networks:
       - dns-network
+    volumes:
+      - attack-logs:/var/log
 
   log-analysis-script:
     build: ./log-analysis-script
@@ -36,19 +40,25 @@ services:
       - elasticsearch
 
   elasticsearch:
-  image: docker.elastic.co/elasticsearch/elasticsearch:7.9.2
-  environment:
-    - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
-  ports:
-    - "9200:9200"
-  
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.9.2
+    environment:
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    ports:
+      - "9200:9200"
+    
   logstash:
     image: docker.elastic.co/logstash/logstash:7.9.2
     volumes:
+      - dns-logs:/var/log/named
+      - attack-logs:/var/log
       - ./logstash/config/logstash.yml:/usr/share/logstash/config/logstash.yml
       - ./logstash/pipeline:/usr/share/logstash/pipeline
     depends_on:
       - elasticsearch
+
+volumes:
+  dns-logs:
+  attack-logs:
 
 networks:
   dns-network:
