@@ -1,0 +1,55 @@
+version: '3'
+
+services:
+  dns-server:
+    build: ./dns-server
+    ports:
+      - "53:53/udp"
+      - "53:53/tcp"
+    networks:
+      - dns-network
+
+  victim-machine:
+    build: ./victim-machine
+    networks:
+      - dns-network
+
+  attack-simulation:
+    build: ./attack-simulation
+    networks:
+      - dns-network
+
+  log-analysis-script:
+    build: ./log-analysis-script
+    volumes:
+      - ./log-files:/log-files
+    networks:
+      - dns-network
+  
+  log-analysis:
+    image: docker.elastic.co/kibana/kibana:7.9.2
+    ports:
+      - "5601:5601"
+    environment:
+      ELASTICSEARCH_URL: http://elasticsearch:9200
+    depends_on:
+      - elasticsearch
+
+  elasticsearch:
+  image: docker.elastic.co/elasticsearch/elasticsearch:7.9.2
+  environment:
+    - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+  ports:
+    - "9200:9200"
+  
+  logstash:
+    image: docker.elastic.co/logstash/logstash:7.9.2
+    volumes:
+      - ./logstash/config/logstash.yml:/usr/share/logstash/config/logstash.yml
+      - ./logstash/pipeline:/usr/share/logstash/pipeline
+    depends_on:
+      - elasticsearch
+
+networks:
+  dns-network:
+    driver: bridge
