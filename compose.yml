@@ -23,12 +23,12 @@ services:
     volumes:
       - attack-logs:/var/log
 
-  log-analysis-script:
-    build: ./log-analysis-script
-    volumes:
-      - ./log-files:/log-files
-    networks:
-      - dns-network
+  # log-analysis-script:
+  #   build: ./log-analysis-script
+  #   volumes:
+  #     - ./log-files:/log-files
+  #   networks:
+  #     - dns-network
   
   log-analysis:
     image: docker.elastic.co/kibana/kibana:7.9.2
